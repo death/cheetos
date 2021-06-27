@@ -25,7 +25,10 @@
    #:benchmark-run-tag
    #:benchmark-run-plist
    #:benchmark-reporter
-   #:report-benchmark-runs))
+   #:report-start-schedule
+   #:report-end-schedule
+   #:report-start-benchmark
+   #:report-end-benchmark))
 
 (in-package #:cheetos/protocols)
 
@@ -114,8 +117,10 @@ Returns the benchmark run."))
 (defclass benchmark-reporter ()
   ())
 
-(defgeneric report-benchmark-runs (benchmark-reporter benchmark-runs)
-  (:documentation
-   "Report performance information gathered in BENCHMARK-RUNS.
+(defgeneric report-start-schedule (benchmark-reporter benchmarks))
 
-BENCHMARK-RUNS is a list of benchmark runs."))
+(defgeneric report-end-schedule (benchmark-reporter benchmark-runs))
+
+(defgeneric report-start-benchmark (benchmark-reporter benchmark))
+
+(defgeneric report-end-benchmark (benchmark-reporter benchmark-run))

@@ -33,30 +33,36 @@
 information."
   (let ((benchmarks (list-all-benchmarks benchmark-suite))
         (new-runs '()))
+    (report-start-schedule reporter benchmarks)
     (dolist (benchmark benchmarks)
+      (report-start-benchmark reporter benchmark)
       (let ((new-run (create-benchmark-run benchmark
                                            (if tag-supplied
                                                tag
                                                (benchmark-tag benchmark)))))
         (add-benchmark-run benchmark new-run)
-        (push new-run new-runs)))
-    (report-benchmark-runs reporter (nreverse new-runs))))
+        (push new-run new-runs)
+        (report-end-benchmark reporter new-run)))
+    (report-end-schedule reporter (nreverse new-runs))))
 
 (defun run-benchmark (name &key (benchmark-suite *benchmark-suite*)
                                 (reporter *benchmark-reporter*)
                                 (tag nil tag-supplied))
   "Run benchmark associated with NAME and report performance information."
-  (let* ((benchmark
-           (find-benchmark name
-                           :benchmark-suite benchmark-suite
-                           :if-does-not-exist :error))
-         (new-run
-           (create-benchmark-run benchmark
-                                 (if tag-supplied
-                                     tag
-                                     (benchmark-tag benchmark)))))
-    (add-benchmark-run benchmark new-run)
-    (report-benchmark-runs reporter (list new-run))))
+  (let ((benchmark
+          (find-benchmark name
+                          :benchmark-suite benchmark-suite
+                          :if-does-not-exist :error)))
+    (report-start-schedule reporter (list benchmark))
+    (report-start-benchmark reporter benchmark)
+    (let ((new-run
+            (create-benchmark-run benchmark
+                                  (if tag-supplied
+                                      tag
+                                      (benchmark-tag benchmark)))))
+      (add-benchmark-run benchmark new-run)
+      (report-end-benchmark reporter new-run)
+      (report-end-schedule reporter (list new-run)))))
 
 (defun find-benchmark (name &key (benchmark-suite *benchmark-suite*)
                                  (if-does-not-exist nil))
