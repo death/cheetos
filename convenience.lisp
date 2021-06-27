@@ -13,15 +13,18 @@
    #:*benchmark-reporter*
    #:run-all-benchmarks
    #:run-benchmark
-   #:find-benchmark))
+   #:find-benchmark
+   #:define-benchmark))
 
 (in-package #:cheetos/convenience)
 
 (defvar *benchmark-suite*
-  (make-instance 'standard-benchmark-suite))
+  (make-instance 'standard-benchmark-suite)
+  "The current benchmark suite.")
 
 (defvar *benchmark-reporter*
-  (make-instance 'standard-benchmark-reporter))
+  (make-instance 'standard-benchmark-reporter)
+  "The current benchmark run reporter.")
 
 (defun run-all-benchmarks (&key (benchmark-suite *benchmark-suite*)
                                 (reporter *benchmark-reporter*))
@@ -54,9 +57,13 @@ information."
 If no benchmark is associated with NAME, act according to
 IF-DOES-NOT-EXIST:
 
- NIL - return NIL;
+  NIL
 
- :ERROR - signal an error."
+    Return NIL.
+
+  :ERROR
+
+    Signal an error."
   (let ((benchmark (lookup-benchmark benchmark-suite name)))
     (or benchmark
         (ecase if-does-not-exist
@@ -65,3 +72,25 @@ IF-DOES-NOT-EXIST:
           (:error
            (error "Benchmark with name ~S does not exist in suite ~S."
                   name benchmark-suite))))))
+
+(defmacro define-benchmark (name &body body)
+  "Define a benchmark associated with NAME.
+
+BODY will be evaluated when the benchmark is run.  The following
+properties may be specified prior to the actual forms:
+
+  :TAG <form>
+
+    The value of <form> will be used as the benchmark's tag.  By
+    default, the benchmark tag is NIL."
+  (let ((tag nil))
+    (loop
+     (cond ((eq (car body) :tag)
+            (setf tag (cadr body))
+            (setf body (cddr body)))
+           (t
+            (return))))
+  `(ensure-benchmark *benchmark-suite*
+                     ',name
+                     :function (lambda () ,@body)
+                     :tag ,tag)))

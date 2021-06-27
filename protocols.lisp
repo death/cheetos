@@ -12,6 +12,7 @@
    #:lookup-benchmark
    #:remove-benchmark
    #:benchmark
+   #:list-session-runs
    #:create-benchmark-run
    #:add-benchmark-run
    #:benchmark-function
@@ -69,6 +70,11 @@ otherwise."))
 
 (defclass benchmark ()
   ())
+
+(defgeneric list-session-runs (benchmark)
+  (:documentation
+   "Return a fresh list of all runs, for the current session, of
+BENCHMARK."))
 
 (defgeneric create-benchmark-run (benchmark)
   (:documentation

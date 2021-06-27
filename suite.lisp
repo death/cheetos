@@ -3,7 +3,10 @@
 ;;;; +----------------------------------------------------------------+
 
 (defpackage #:cheetos/suite
-  (:use #:cl #:cheetos/protocols)
+  (:use
+   #:cl
+   #:cheetos/protocols
+   #:cheetos/benchmark)
   (:import-from
    #:alexandria)
   (:export
@@ -19,14 +22,13 @@
   (loop for benchmark being each hash-value of (benchmark-suite-table suite)
         collect benchmark))
 
-(defmethod ensure-benchmark ((suite standard-benchmark-suite) name &key function (tag nil tag-supplied))
+(defmethod ensure-benchmark ((suite standard-benchmark-suite) name &key function tag)
   (let ((benchmark (or (lookup-benchmark suite name)
                        (create-benchmark suite name function))))
     (when (and function
                (not (eql function (benchmark-function benchmark))))
       (setf (benchmark-function benchmark) function))
-    (when (and tag-supplied
-               (not (equal tag (benchmark-tag benchmark))))
+    (when (not (equal tag (benchmark-tag benchmark)))
       (setf (benchmark-tag benchmark) tag))
     benchmark))
 
@@ -36,7 +38,7 @@
       (error "Benchmark with name ~S already exists in suite ~S." name suite)))
   (alexandria:ensure-functionf function)
   (setf (gethash name (benchmark-suite-table suite))
-        (make-instance 'benchmark
+        (make-instance 'standard-benchmark
                        :suite suite
                        :name name
                        :function function)))

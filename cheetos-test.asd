@@ -1,14 +1,14 @@
 ;;;; +----------------------------------------------------------------+
-;;;; | CHEETOS                                                        |
+;;;; | BANE                                                           |
 ;;;; +----------------------------------------------------------------+
 
 ;;;; System definitions
 
 ;; -*- Mode: LISP; Syntax: COMMON-LISP; Package: CL-USER; Base: 10 -*-
 
-(asdf:defsystem #:cheetos
-  :description "Benchmark your code."
+(asdf:defsystem #:cheetos-test
+  :description "Tests for CHEETOS"
   :class :package-inferred-system
   :defsystem-depends-on ("asdf-package-system")
-  :depends-on ("cheetos/all")
-  :in-order-to ((asdf:test-op (asdf:test-op #:cheetos-test))))
+  :depends-on ("cheetos/tests")
+  :perform (asdf:test-op (op c) (uiop:symbol-call :cheetos/tests :run-tests)))
