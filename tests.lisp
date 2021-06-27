@@ -15,13 +15,16 @@
 ;;
 ;; Should it be (in-benchmark-suite cheetos-tests) ?
 ;;
-;; Should suites be flat?
+;; Should suites be flat?  If so, we could use the package name of the
+;; first symbol in a benchmark name to designate a suite (right, this
+;; means we'd require a symbol somewhere in a benchmark's name).
 ;;
 ;; Should they be a kind of benchmark, so that a run would constitute
 ;; the totals of benchmarks in it?
 ;;
 ;; Should benchmark names indicate the suites they belong to, so for
-;; example (ackermann foo) belongs in the ackermann suite?
+;; example (ackermann foo) belongs in the ackermann suite?  Maybe
+;; instead of explicit suites we'll just deal with name prefixes?
 
 (defun ackermann (m n)
   (declare (optimize (speed 3)))
