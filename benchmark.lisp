@@ -25,10 +25,9 @@
     (with-slots (name tag runs) benchmark
       (format stream "~S~@[ tag ~S~]~[~; ~:*~D run~:P~]" name tag (length runs)))))
 
-(defmethod create-benchmark-run ((benchmark standard-benchmark))
+(defmethod create-benchmark-run ((benchmark standard-benchmark) tag)
   (let ((start-time (get-universal-time))
         end-time
-        (tag (benchmark-tag benchmark))
         plist)
     ;; FIXME: SBCL-specific code here, for now...
     (sb-impl::call-with-timing

@@ -76,9 +76,11 @@ otherwise."))
    "Return a fresh list of all runs, for the current session, of
 BENCHMARK."))
 
-(defgeneric create-benchmark-run (benchmark)
+(defgeneric create-benchmark-run (benchmark tag)
   (:documentation
-   "Create a new benchmark run."))
+   "Create a new benchmark run for BENCHMARK.
+
+The run will be tagged with TAG."))
 
 (defgeneric add-benchmark-run (benchmark benchmark-run)
   (:documentation
