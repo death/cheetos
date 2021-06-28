@@ -7,23 +7,23 @@
   (:export
    #:benchmark
    #:list-session-runs
-   #:create-benchmark-run
-   #:add-benchmark-run
-   #:benchmark-function
-   #:benchmark-tag
-   #:benchmark-name
-   #:benchmark-parent
-   #:benchmark-children
-   #:benchmark-add-child
-   #:benchmark-lookup-child
-   #:benchmark-remove-child
-   #:benchmark-run
-   #:benchmark-run-benchmark
-   #:benchmark-run-start-time
-   #:benchmark-run-end-time
-   #:benchmark-run-tag
-   #:benchmark-run-plist
-   #:benchmark-reporter
+   #:create-run
+   #:add-run
+   #:thunk
+   #:tag
+   #:name
+   #:parent
+   #:children
+   #:add-child
+   #:lookup-child
+   #:remove-child
+   #:run
+   #:benchmark
+   #:start-time
+   #:end-time
+   #:tag
+   #:plist
+   #:reporter
    #:report-start-schedule
    #:report-end-schedule
    #:report-start-benchmark
@@ -39,60 +39,60 @@
    "Return a fresh list of all runs, for the current session, of
 BENCHMARK."))
 
-(defgeneric create-benchmark-run (benchmark tag)
+(defgeneric create-run (benchmark tag)
   (:documentation
    "Create new benchmark run for BENCHMARK.
 
 The run will be tagged with TAG."))
 
-(defgeneric add-benchmark-run (benchmark benchmark-run)
+(defgeneric add-run (benchmark run)
   (:documentation
-   "Add BENCHMARK-RUN to the runs of BENCHMARK.
+   "Add RUN to the runs of BENCHMARK.
 
 Returns the benchmark run."))
 
-(defgeneric benchmark-function (benchmark))
+(defgeneric thunk (benchmark))
 
-(defgeneric (setf benchmark-function) (new-function benchmark))
+(defgeneric (setf thunk) (new-thunk benchmark))
 
-(defgeneric benchmark-tag (benchmark))
+(defgeneric tag (benchmark))
 
-(defgeneric (setf benchmark-tag) (new-tag benchmark))
+(defgeneric (setf tag) (new-tag benchmark))
 
-(defgeneric benchmark-name (benchmark))
+(defgeneric name (benchmark))
 
-(defgeneric benchmark-parent (benchmark))
+(defgeneric parent (benchmark))
 
-(defgeneric (setf benchmark-parent) (new-parent benchmark))
+(defgeneric (setf parent) (new-parent benchmark))
 
-(defgeneric benchmark-children (benchmark))
+(defgeneric children (benchmark))
 
-(defgeneric benchmark-add-child (parent child))
+(defgeneric add-child (parent child))
 
-(defgeneric benchmark-lookup-child (benchmark child-name-relative))
+(defgeneric lookup-child (benchmark child-name-relative))
 
-(defgeneric benchmark-remove-child (benchmark child))
+(defgeneric remove-child (benchmark child))
 
-(defclass benchmark-run ()
+(defclass run ()
   ())
 
-(defgeneric benchmark-run-benchmark (benchmark-run))
+(defgeneric benchmark (run))
 
-(defgeneric benchmark-run-start-time (benchmark-run))
+(defgeneric start-time (run))
 
-(defgeneric benchmark-run-end-time (benchmark-run))
+(defgeneric end-time (run))
 
-(defgeneric benchmark-run-tag (benchmark-run))
+(defgeneric tag (run))
 
-(defgeneric benchmark-run-plist (benchmark-run))
+(defgeneric plist (run))
 
-(defclass benchmark-reporter ()
+(defclass reporter ()
   ())
 
-(defgeneric report-start-schedule (benchmark-reporter benchmarks))
+(defgeneric report-start-schedule (reporter benchmarks))
 
-(defgeneric report-end-schedule (benchmark-reporter benchmark-runs))
+(defgeneric report-end-schedule (reporter runs))
 
-(defgeneric report-start-benchmark (benchmark-reporter benchmark))
+(defgeneric report-start-benchmark (reporter benchmark))
 
-(defgeneric report-end-benchmark (benchmark-reporter benchmark-run))
+(defgeneric report-end-benchmark (reporter run))

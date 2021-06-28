@@ -9,7 +9,7 @@
    #:cheetos/benchmark
    #:cheetos/reporter)
   (:export
-   #:*benchmark-reporter*
+   #:*reporter*
    #:run-benchmark
    #:find-benchmark
    #:define-benchmark))
@@ -19,13 +19,13 @@
 (defvar *root-benchmark*
   (make-instance 'standard-benchmark
                  :name '()
-                 :function nil))
+                 :thunk nil))
 
-(defvar *benchmark-reporter*
-  (make-instance 'standard-benchmark-reporter)
+(defvar *reporter*
+  (make-instance 'standard-reporter)
   "The current benchmark run reporter.")
 
-(defun run-benchmark (name &key (reporter *benchmark-reporter*)
+(defun run-benchmark (name &key (reporter *reporter*)
                                 (tag nil tag-supplied))
   "Run benchmark associated with NAME, including any descendants, and
 report performance information."
@@ -35,11 +35,11 @@ report performance information."
     (report-start-schedule reporter benchmarks)
     (dolist (benchmark benchmarks)
       (report-start-benchmark reporter benchmark)
-      (let ((new-run (create-benchmark-run benchmark
-                                           (if tag-supplied
-                                               tag
-                                               (benchmark-tag benchmark)))))
-        (add-benchmark-run benchmark new-run)
+      (let ((new-run (create-run benchmark
+                                 (if tag-supplied
+                                     tag
+                                     (tag benchmark)))))
+        (add-run benchmark new-run)
         (push new-run new-runs)
         (report-end-benchmark reporter new-run)))
     (report-end-schedule reporter (nreverse new-runs))))
@@ -53,15 +53,14 @@ report performance information."
                    ((null path)
                     benchmark)
                    (t
-                    (rec (benchmark-lookup-child benchmark (first path))
+                    (rec (lookup-child benchmark (first path))
                          (rest path))))))
     (rec *root-benchmark* name)))
 
 (defun collect-benchmarks (benchmark)
   "Return a list of BENCHMARK and its descendants."
   (cons benchmark
-        (mapcan #'collect-benchmarks
-                (benchmark-children benchmark))))
+        (mapcan #'collect-benchmarks (children benchmark))))
 
 (defmacro define-benchmark (name &body body)
   "Define a benchmark associated with NAME.
@@ -80,8 +79,8 @@ properties may be specified prior to the actual forms:
             (setf body (cddr body)))
            (t
             (return))))
-    `(benchmark-add-child *root-benchmark*
-                          (make-instance 'standard-benchmark
-                                         :name ',name
-                                         :tag ,tag
-                                         :function (lambda () ,@body)))))
+    `(add-child *root-benchmark*
+                (make-instance 'standard-benchmark
+                               :name ',name
+                               :tag ,tag
+                               :thunk (lambda () ,@body)))))

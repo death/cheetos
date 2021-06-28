@@ -10,31 +10,31 @@
   (:import-from
    #:alexandria)
   (:export
-   #:standard-benchmark-reporter))
+   #:standard-reporter))
 
 (in-package #:cheetos/reporter)
 
-(defclass standard-benchmark-reporter (benchmark-reporter)
+(defclass standard-reporter (reporter)
   ())
 
-(defmethod report-start-schedule ((reporter standard-benchmark-reporter) benchmarks)
+(defmethod report-start-schedule ((reporter standard-reporter) benchmarks)
   (format t "~&Running ~D benchmark~:P~2%"
-          (count-if #'benchmark-function benchmarks)))
+          (count-if #'thunk benchmarks)))
 
-(defmethod report-end-schedule ((reporter standard-benchmark-reporter) runs)
+(defmethod report-end-schedule ((reporter standard-reporter) runs)
   (declare (ignore runs)))
 
-(defmethod report-start-benchmark ((reporter standard-benchmark-reporter) benchmark)
+(defmethod report-start-benchmark ((reporter standard-reporter) benchmark)
   (declare (ignore benchmark)))
 
 ;; We could attempt to get a previous run for the same benchmark to
 ;; compare to.
 
-(defmethod report-end-benchmark ((reporter standard-benchmark-reporter) run)
-  (let* ((name (benchmark-name (benchmark-run-benchmark run)))
-         (tag (benchmark-run-tag run))
-         (start-time (benchmark-run-start-time run))
-         (plist (benchmark-run-plist run))
+(defmethod report-end-benchmark ((reporter standard-reporter) run)
+  (let* ((name (name (benchmark run)))
+         (tag (tag run))
+         (start-time (start-time run))
+         (plist (plist run))
          (time-string (time-point-string start-time))
          (perf-string
            (format nil "~D μs, ~D b"
