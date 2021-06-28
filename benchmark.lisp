@@ -31,19 +31,22 @@
 
 (defmethod create-run ((benchmark standard-benchmark) tag)
   (let ((start-time (get-universal-time))
-        plist)
+        r-user-run-time-us
+        r-bytes-consed)
     (when (thunk benchmark)
       ;; FIXME: SBCL-specific code here, for now...
       (sb-impl::call-with-timing
-       (lambda (&rest timing-info)
-         (setf plist (copy-list timing-info)))
+       (lambda (&key user-run-time-us bytes-consed &allow-other-keys)
+         (setf r-user-run-time-us user-run-time-us)
+         (setf r-bytes-consed bytes-consed))
        (thunk benchmark)))
     (make-instance 'standard-run
                    :benchmark benchmark
                    :start-time start-time
                    :end-time (get-universal-time)
                    :tag tag
-                   :plist plist)))
+                   :user-run-time-us r-user-run-time-us
+                   :bytes-consed r-bytes-consed)))
 
 (defmethod add-run ((benchmark standard-benchmark) run)
   (assert (eq (benchmark run) benchmark))

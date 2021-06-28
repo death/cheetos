@@ -17,13 +17,15 @@
    (start-time :initarg :start-time :reader start-time)
    (end-time :initarg :end-time :reader end-time)
    (tag :initarg :tag :reader tag)
-   (plist :initarg :plist :reader plist)))
+   (user-run-time-us :initarg :user-run-time-us :reader user-run-time-us)
+   (bytes-consed :initarg :bytes-consed :reader bytes-consed)))
 
 (defmethod print-object ((run standard-run) stream)
   (print-unreadable-object (run stream :type t)
-    (with-slots (tag start-time end-time plist) run
+    (with-slots (tag start-time end-time user-run-time-us bytes-consed)
+        run
       (format stream "~@[~S ~]~A ~D μs, ~D b"
               tag
               (time-range-string start-time end-time)
-              (getf plist :user-run-time-us)
-              (getf plist :bytes-consed)))))
+              user-run-time-us
+              bytes-consed))))

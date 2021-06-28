@@ -22,7 +22,8 @@
    #:start-time
    #:end-time
    #:tag
-   #:plist
+   #:user-run-time-us
+   #:bytes-consed
    #:reporter
    #:report-start-schedule
    #:report-end-schedule
@@ -84,7 +85,9 @@ Returns the benchmark run."))
 
 (defgeneric tag (run))
 
-(defgeneric plist (run))
+(defgeneric user-run-time-us (run))
+
+(defgeneric bytes-consed (run))
 
 (defclass reporter ()
   ())
