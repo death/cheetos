@@ -10,9 +10,10 @@ CREATE TABLE runs (
        benchmark_id INTEGER NOT NULL,
        start_time INTEGER NOT NULL,
        end_time INTEGER NOT NULL,
+       -- FIXME: create a tags table
        tag TEXT NOT NULL,
-       user_run_time_us INTEGER NOT NULL,
-       bytes_consed INTEGER NOT NULL
+       user_run_time_us INTEGER,
+       bytes_consed INTEGER
 );
 
 CREATE INDEX runs_benchmark_id_idx ON runs (benchmark_id ASC);

@@ -7,7 +7,8 @@
    #:cl
    #:cheetos/protocols
    #:cheetos/benchmark
-   #:cheetos/reporter)
+   #:cheetos/reporter
+   #:cheetos/persist)
   (:export
    #:*reporter*
    #:run-benchmark
@@ -17,7 +18,7 @@
 (in-package #:cheetos/convenience)
 
 (defvar *root-benchmark*
-  (make-instance 'standard-benchmark
+  (make-instance 'persistent-benchmark
                  :name '()
                  :thunk nil))
 
@@ -33,15 +34,16 @@ report performance information."
                      (find-benchmark name :if-does-not-exist :error)))
         (new-runs '()))
     (report-start-schedule reporter benchmarks)
-    (dolist (benchmark benchmarks)
-      (report-start-benchmark reporter benchmark)
-      (let ((new-run (create-run benchmark
-                                 (if tag-supplied
-                                     tag
-                                     (tag benchmark)))))
-        (add-run benchmark new-run)
-        (push new-run new-runs)
-        (report-end-benchmark reporter new-run)))
+    (with-db
+      (dolist (benchmark benchmarks)
+        (report-start-benchmark reporter benchmark)
+        (let ((new-run (create-run benchmark
+                                   (if tag-supplied
+                                       tag
+                                       (tag benchmark)))))
+          (add-run benchmark new-run)
+          (push new-run new-runs)
+          (report-end-benchmark reporter new-run))))
     (report-end-schedule reporter (nreverse new-runs))))
 
 (defun find-benchmark (name &key (if-does-not-exist nil))
@@ -80,7 +82,7 @@ properties may be specified prior to the actual forms:
            (t
             (return))))
     `(add-child *root-benchmark*
-                (make-instance 'standard-benchmark
+                (make-instance 'persistent-benchmark
                                :name ',name
                                :tag ,tag
                                :thunk (lambda () ,@body)))))
