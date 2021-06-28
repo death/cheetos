@@ -8,7 +8,6 @@
    #:benchmark-suite
    #:list-all-benchmarks
    #:ensure-benchmark
-   #:create-benchmark
    #:lookup-benchmark
    #:remove-benchmark
    #:benchmark
@@ -47,17 +46,6 @@ benchmark.
 FUNCTION serves as an entry point for the code to instrument.
 
 TAG will be used to tag future benchmark runs."))
-
-(defgeneric create-benchmark (benchmark-suite benchmark-name benchmark-function)
-  (:documentation
-   "Associate a new benchmark in BENCHMARK-SUITE with BENCHMARK-NAME,
-and return the benchmark.
-
-BENCHMARK-FUNCTION serves as an entry point for the code to
-instrument.
-
-Signals an error if a benchmark is already associated with
-BENCHMARK-NAME."))
 
 (defgeneric lookup-benchmark (benchmark-suite benchmark-name)
   (:documentation

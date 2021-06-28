@@ -32,7 +32,7 @@
       (setf (benchmark-tag benchmark) tag))
     benchmark))
 
-(defmethod create-benchmark ((suite standard-benchmark-suite) name function)
+(defun create-benchmark (suite name function)
   (let ((benchmark (lookup-benchmark suite name)))
     (unless (null benchmark)
       (error "Benchmark with name ~S already exists in suite ~S." name suite)))
