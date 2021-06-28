@@ -18,6 +18,7 @@
   ((parent :initform nil :accessor parent)
    (children-table :initform (make-hash-table) :reader children-table)
    (name :initarg :name :reader name)
+   ;; TODO: Instead of a simple reader, implement tag inheritance.
    (tag :initarg :tag :accessor tag)
    (thunk :initarg :thunk :accessor thunk)
    (runs :initform (make-array 0 :adjustable t :fill-pointer 0)
