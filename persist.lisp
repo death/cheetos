@@ -12,7 +12,7 @@
   (:import-from
    #:sqlite)
   (:export
-   #:persistent-benchmark
+   #:persisting-benchmark
    #:with-db))
 
 (in-package #:cheetos/persist)
@@ -101,9 +101,9 @@
          (user-run-time-us run)
          (bytes-consed run)))))
 
-(defclass persistent-benchmark (standard-benchmark)
+(defclass persisting-benchmark (standard-benchmark)
   ())
 
-(defmethod add-run :after ((benchmark persistent-benchmark) run)
+(defmethod add-run :after ((benchmark persisting-benchmark) run)
   (with-tx
     (intern-run run)))

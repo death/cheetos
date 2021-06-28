@@ -18,7 +18,7 @@
 (in-package #:cheetos/convenience)
 
 (defvar *root-benchmark*
-  (make-instance 'persistent-benchmark
+  (make-instance 'persisting-benchmark
                  :name '()
                  :thunk nil))
 
@@ -82,7 +82,7 @@ properties may be specified prior to the actual forms:
            (t
             (return))))
     `(add-child *root-benchmark*
-                (make-instance 'persistent-benchmark
+                (make-instance 'persisting-benchmark
                                :name ',name
                                :tag ,tag
                                :thunk (lambda () ,@body)))))
