@@ -6,32 +6,31 @@
   (:use
    #:cl
    #:cheetos/protocols
-   #:cheetos/suite
+   #:cheetos/benchmark
    #:cheetos/reporter)
   (:export
-   #:*benchmark-suite*
    #:*benchmark-reporter*
-   #:run-all-benchmarks
    #:run-benchmark
    #:find-benchmark
    #:define-benchmark))
 
 (in-package #:cheetos/convenience)
 
-(defvar *benchmark-suite*
-  (make-instance 'standard-benchmark-suite)
-  "The current benchmark suite.")
+(defvar *root-benchmark*
+  (make-instance 'standard-benchmark
+                 :name '()
+                 :function nil))
 
 (defvar *benchmark-reporter*
   (make-instance 'standard-benchmark-reporter)
   "The current benchmark run reporter.")
 
-(defun run-all-benchmarks (&key (benchmark-suite *benchmark-suite*)
-                                (reporter *benchmark-reporter*)
+(defun run-benchmark (name &key (reporter *benchmark-reporter*)
                                 (tag nil tag-supplied))
-  "Run all benchmarks in BENCHMARK-SUITE and report performance
-information."
-  (let ((benchmarks (list-all-benchmarks benchmark-suite))
+  "Run benchmark associated with NAME, including any descendants, and
+report performance information."
+  (let ((benchmarks (collect-benchmarks
+                     (find-benchmark name :if-does-not-exist :error)))
         (new-runs '()))
     (report-start-schedule reporter benchmarks)
     (dolist (benchmark benchmarks)
@@ -45,47 +44,24 @@ information."
         (report-end-benchmark reporter new-run)))
     (report-end-schedule reporter (nreverse new-runs))))
 
-(defun run-benchmark (name &key (benchmark-suite *benchmark-suite*)
-                                (reporter *benchmark-reporter*)
-                                (tag nil tag-supplied))
-  "Run benchmark associated with NAME and report performance information."
-  (let ((benchmark
-          (find-benchmark name
-                          :benchmark-suite benchmark-suite
-                          :if-does-not-exist :error)))
-    (report-start-schedule reporter (list benchmark))
-    (report-start-benchmark reporter benchmark)
-    (let ((new-run
-            (create-benchmark-run benchmark
-                                  (if tag-supplied
-                                      tag
-                                      (benchmark-tag benchmark)))))
-      (add-benchmark-run benchmark new-run)
-      (report-end-benchmark reporter new-run)
-      (report-end-schedule reporter (list new-run)))))
+(defun find-benchmark (name &key (if-does-not-exist nil))
+  (labels ((rec (benchmark path)
+             (cond ((null benchmark)
+                    (ecase if-does-not-exist
+                      ((nil) nil)
+                      (:error (error "No benchmark with name ~S was found." name))))
+                   ((null path)
+                    benchmark)
+                   (t
+                    (rec (benchmark-lookup-child benchmark (first path))
+                         (rest path))))))
+    (rec *root-benchmark* name)))
 
-(defun find-benchmark (name &key (benchmark-suite *benchmark-suite*)
-                                 (if-does-not-exist nil))
-  "Return the benchmark associated with NAME.
-
-If no benchmark is associated with NAME, act according to
-IF-DOES-NOT-EXIST:
-
-  NIL
-
-    Return NIL.
-
-  :ERROR
-
-    Signal an error."
-  (let ((benchmark (lookup-benchmark benchmark-suite name)))
-    (or benchmark
-        (ecase if-does-not-exist
-          ((nil)
-           nil)
-          (:error
-           (error "Benchmark with name ~S does not exist in suite ~S."
-                  name benchmark-suite))))))
+(defun collect-benchmarks (benchmark)
+  "Return a list of BENCHMARK and its descendants."
+  (cons benchmark
+        (mapcan #'collect-benchmarks
+                (benchmark-children benchmark))))
 
 (defmacro define-benchmark (name &body body)
   "Define a benchmark associated with NAME.
@@ -104,7 +80,8 @@ properties may be specified prior to the actual forms:
             (setf body (cddr body)))
            (t
             (return))))
-  `(ensure-benchmark *benchmark-suite*
-                     ',name
-                     :function (lambda () ,@body)
-                     :tag ,tag)))
+    `(benchmark-add-child *root-benchmark*
+                          (make-instance 'standard-benchmark
+                                         :name ',name
+                                         :tag ,tag
+                                         :function (lambda () ,@body)))))

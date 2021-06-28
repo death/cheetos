@@ -18,10 +18,11 @@
   ())
 
 (defmethod report-start-schedule ((reporter standard-benchmark-reporter) benchmarks)
-  (format t "~&Running ~D benchmark~:P~2%" (length benchmarks)))
+  (format t "~&Running ~D benchmark~:P~2%"
+          (count-if #'benchmark-function benchmarks)))
 
 (defmethod report-end-schedule ((reporter standard-benchmark-reporter) runs)
-  (declare (ignore benchmark-runs)))
+  (declare (ignore runs)))
 
 (defmethod report-start-benchmark ((reporter standard-benchmark-reporter) benchmark)
   (declare (ignore benchmark)))
@@ -39,8 +40,9 @@
            (format nil "~D μs, ~D b"
                    (getf plist :user-run-time-us)
                    (getf plist :bytes-consed))))
-    (format t "[~A] <~:(~{~A~^ :: ~}~)>~@[ [~A]~] ~A~%"
-            time-string
-            (alexandria:ensure-list name)
-            tag
-            perf-string)))
+    (when plist
+      (format t "[~A] <~:(~{~A~^ :: ~}~)>~@[ [~A]~] ~A~%"
+              time-string
+              (alexandria:ensure-list name)
+              tag
+              perf-string))))

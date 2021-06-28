@@ -5,11 +5,6 @@
 (defpackage #:cheetos/protocols
   (:use #:cl)
   (:export
-   #:benchmark-suite
-   #:list-all-benchmarks
-   #:ensure-benchmark
-   #:lookup-benchmark
-   #:remove-benchmark
    #:benchmark
    #:list-session-runs
    #:create-benchmark-run
@@ -17,6 +12,11 @@
    #:benchmark-function
    #:benchmark-tag
    #:benchmark-name
+   #:benchmark-parent
+   #:benchmark-children
+   #:benchmark-add-child
+   #:benchmark-lookup-child
+   #:benchmark-remove-child
    #:benchmark-run
    #:benchmark-run-benchmark
    #:benchmark-run-start-time
@@ -31,34 +31,6 @@
 
 (in-package #:cheetos/protocols)
 
-(defclass benchmark-suite ()
-  ())
-
-(defgeneric list-all-benchmarks (benchmark-suite)
-  (:documentation
-   "Return a fresh list of all benchmark in BENCHMARK-SUITE."))
-
-(defgeneric ensure-benchmark (benchmark-suite benchmake-name &key function tag &allow-other-keys)
-  (:documentation
-   "Create or update a benchmark associated with NAME, and return the
-benchmark.
-
-FUNCTION serves as an entry point for the code to instrument.
-
-TAG will be used to tag future benchmark runs."))
-
-(defgeneric lookup-benchmark (benchmark-suite benchmark-name)
-  (:documentation
-   "Return the benchmark associated with BENCHMARK-NAME in
-BENCHMARK-SUITE, or NIL if there is no such association."))
-
-(defgeneric remove-benchmark (benchmark-suite benchmark)
-  (:documentation
-   "Remove BENCHMARK from BENCHMARK-SUITE.
-
-Returns true if the benchmark existed and was removed, and false
-otherwise."))
-
 (defclass benchmark ()
   ())
 
@@ -69,7 +41,7 @@ BENCHMARK."))
 
 (defgeneric create-benchmark-run (benchmark tag)
   (:documentation
-   "Create a new benchmark run for BENCHMARK.
+   "Create new benchmark run for BENCHMARK.
 
 The run will be tagged with TAG."))
 
@@ -88,6 +60,18 @@ Returns the benchmark run."))
 (defgeneric (setf benchmark-tag) (new-tag benchmark))
 
 (defgeneric benchmark-name (benchmark))
+
+(defgeneric benchmark-parent (benchmark))
+
+(defgeneric (setf benchmark-parent) (new-parent benchmark))
+
+(defgeneric benchmark-children (benchmark))
+
+(defgeneric benchmark-add-child (parent child))
+
+(defgeneric benchmark-lookup-child (benchmark child-name-relative))
+
+(defgeneric benchmark-remove-child (benchmark child))
 
 (defclass benchmark-run ()
   ())

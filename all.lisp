@@ -8,7 +8,6 @@
    "Contains and exports public symbols of CHEETOS.")
   (:use-reexport
    #:cheetos/protocols
-   #:cheetos/suite
    #:cheetos/benchmark
    #:cheetos/run
    #:cheetos/reporter
