@@ -18,7 +18,6 @@
   ((parent :initform nil :accessor parent)
    (children-table :initform (make-hash-table) :reader children-table)
    (name :initarg :name :reader name)
-   ;; TODO: Instead of a simple reader, implement tag inheritance.
    (tag :initarg :tag :accessor tag)
    (thunk :initarg :thunk :accessor thunk)
    (runs :initform (make-array 0 :adjustable t :fill-pointer 0)
@@ -29,6 +28,13 @@
   (print-unreadable-object (benchmark stream :type t)
     (with-slots (name tag runs) benchmark
       (format stream "~S~@[ tag ~S~]~[~; ~:*~D run~:P~]" name tag (length runs)))))
+
+(defmethod tag :around ((benchmark standard-benchmark))
+  (or (call-next-method)
+      (let ((parent (parent benchmark)))
+        (if (null parent)
+            nil
+            (tag parent)))))
 
 (defmethod create-run ((benchmark standard-benchmark) tag)
   (let ((start-time (get-universal-time))

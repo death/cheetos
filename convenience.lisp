@@ -86,4 +86,6 @@ properties may be specified prior to the actual forms:
                 (make-instance 'persisting-benchmark
                                :name ',name
                                :tag ,tag
-                               :thunk (lambda () ,@body)))))
+                               :thunk ,(if (null body)
+                                           `nil
+                                           `(lambda () ,@body))))))
