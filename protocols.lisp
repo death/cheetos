@@ -42,7 +42,12 @@ BENCHMARK."))
 
 (defgeneric create-run (benchmark tag)
   (:documentation
-   "Create new benchmark run for BENCHMARK.
+   "Create new benchmark run for BENCHMARK, or return NIL if it's a
+filler benchmark.
+
+A filler benchmark is a benchmark that does not hold a reference to a
+thunk function.  Such a benchmark usually exists to serve as a
+container of child benchmarks.
 
 The run will be tagged with TAG."))
 
@@ -92,10 +97,26 @@ Returns the benchmark run."))
 (defclass reporter ()
   ())
 
-(defgeneric report-start-schedule (reporter benchmarks))
+(defgeneric report-start-schedule (reporter benchmarks)
+  (:documentation
+   "Called before BENCHMARKS are run."))
 
-(defgeneric report-end-schedule (reporter runs))
+(defgeneric report-end-schedule (reporter runs)
+  (:documentation
+   "Calls after benchmarks are run, with a list of the RUNS they
+created.
 
-(defgeneric report-start-benchmark (reporter benchmark))
+Not all benchmarks create benchmark runs.  In particular, filler
+benchmarks return NIL instead.  Therefore, the number of benchmark
+runs in the list may be lower than the number of benchmarks at the
+start of the schedule."))
 
-(defgeneric report-end-benchmark (reporter run))
+(defgeneric report-start-benchmark (reporter benchmark)
+  (:documentation
+   "Called before BENCHMARK is run."))
+
+(defgeneric report-end-benchmark (reporter run)
+  (:documentation
+   "Called after a benchmark created RUN, or returned NIL.
+
+RUN may be either NIL or a benchmark run."))

@@ -40,19 +40,20 @@
        (lambda (&key user-run-time-us bytes-consed &allow-other-keys)
          (setf r-user-run-time-us user-run-time-us)
          (setf r-bytes-consed bytes-consed))
-       (thunk benchmark)))
-    (make-instance 'standard-run
-                   :benchmark benchmark
-                   :start-time start-time
-                   :end-time (get-universal-time)
-                   :tag tag
-                   :user-run-time-us r-user-run-time-us
-                   :bytes-consed r-bytes-consed)))
+       (thunk benchmark))
+      (make-instance 'standard-run
+                     :benchmark benchmark
+                     :start-time start-time
+                     :end-time (get-universal-time)
+                     :tag tag
+                     :user-run-time-us r-user-run-time-us
+                     :bytes-consed r-bytes-consed))))
 
 (defmethod add-run ((benchmark standard-benchmark) run)
-  (assert (eq (benchmark run) benchmark))
-  (vector-push-extend run (runs benchmark))
-  run)
+  (when run
+    (assert (eq (benchmark run) benchmark))
+    (vector-push-extend run (runs benchmark))
+    run))
 
 (defmethod list-session-runs ((benchmark standard-benchmark))
   (map 'list #'identity (runs benchmark)))

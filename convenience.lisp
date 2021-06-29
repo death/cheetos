@@ -41,8 +41,9 @@ report performance information."
                                    (if tag-supplied
                                        tag
                                        (tag benchmark)))))
-          (add-run benchmark new-run)
-          (push new-run new-runs)
+          (when new-run
+            (add-run benchmark new-run)
+            (push new-run new-runs))
           (report-end-benchmark reporter new-run))))
     (report-end-schedule reporter (nreverse new-runs))))
 

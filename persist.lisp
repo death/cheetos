@@ -120,5 +120,6 @@
   ())
 
 (defmethod add-run :after ((benchmark persisting-benchmark) run)
-  (with-tx
-    (intern-run run)))
+  (when run
+    (with-tx
+      (intern-run run))))
