@@ -88,16 +88,31 @@
         (add-benchmark name)
         (find-benchmark name))))
 
+(defun add-tag (tag)
+  (e "INSERT INTO tags (tag) VALUES (?)" tag))
+
+(defun list-tags ()
+  (e/l "SELECT id, tag FROM tags"))
+
+(defun find-tag (tag)
+  (e/s "SELECT id FROM tags WHERE tag = ?" tag))
+
+(defun intern-tag (tag)
+  (or (find-tag tag)
+      (progn
+        (add-tag tag)
+        (find-tag tag))))
+
 (defun intern-run (run)
   (with-standard-io-syntax
     (let ((*package* (load-time-value (find-package "KEYWORD"))))
       (e ("INSERT INTO runs"
-          "(benchmark_id, start_time, end_time, tag, user_run_time_us, bytes_consed)"
+          "(benchmark_id, start_time, end_time, tag_id, user_run_time_us, bytes_consed)"
           "VALUES (?, ?, ?, ?, ?, ?)")
          (intern-benchmark (prin1-to-string (name (benchmark run))))
          (start-time run)
          (end-time run)
-         (prin1-to-string (tag run))
+         (intern-tag (prin1-to-string (tag run)))
          (user-run-time-us run)
          (bytes-consed run)))))
 
