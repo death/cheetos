@@ -6,14 +6,16 @@
   (:use
    #:cl
    #:cheetos/protocols
-   #:cheetos/benchmark)
+   #:cheetos/benchmark
+   #:cheetos/run)
   (:import-from
    #:uiop)
   (:import-from
    #:sqlite)
   (:export
    #:persisting-benchmark
-   #:with-db))
+   #:with-db
+   #:list-runs))
 
 (in-package #:cheetos/persist)
 
@@ -97,6 +99,9 @@
 (defun find-tag (tag)
   (e/s "SELECT id FROM tags WHERE tag = ?" tag))
 
+(defun find-tag-by-id (tag-id)
+  (e/s "SELECT tag FROM tags WHERE id = ?" tag-id))
+
 (defun intern-tag (tag)
   (or (find-tag tag)
       (progn
@@ -115,6 +120,36 @@
          (intern-tag (prin1-to-string (tag run)))
          (user-run-time-us run)
          (bytes-consed run)))))
+
+(defun list-runs (benchmark)
+  (with-standard-io-syntax
+    (let ((*package* (load-time-value (find-package "KEYWORD")))
+          (*read-eval* nil))
+      (with-tx
+        (let ((benchmark-id (find-benchmark (prin1-to-string (name benchmark))))
+              (tag-ids-to-tags (make-hash-table)))
+          (labels ((make-run (row)
+                     (destructuring-bind (id benchmark-id start-time
+                                          end-time tag-id user-run-time-us
+                                          bytes-consed)
+                         row
+                       (declare (ignore id benchmark-id))
+                       (make-instance 'standard-run
+                                      :benchmark benchmark
+                                      :start-time start-time
+                                      :end-time end-time
+                                      :tag (or (gethash tag-id tag-ids-to-tags)
+                                               (setf (gethash tag-id tag-ids-to-tags)
+                                                     (read-from-string (find-tag-by-id tag-id))))
+                                      :user-run-time-us user-run-time-us
+                                      :bytes-consed bytes-consed))))
+            (when benchmark-id
+              (mapcar #'make-run
+                      (e/l ("SELECT id, benchmark_id, start_time, end_time, tag_id, user_run_time_us, bytes_consed"
+                            "FROM runs"
+                            "WHERE benchmark_id = ?"
+                            "ORDER BY id DESC")
+                           benchmark-id)))))))))
 
 (defclass persisting-benchmark (standard-benchmark)
   ())
