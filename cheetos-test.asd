@@ -8,6 +8,8 @@
 
 (asdf:defsystem #:cheetos-test
   :description "Tests for CHEETOS"
+  :author "death <github.com/death>"
+  :license "MIT"
   :class :package-inferred-system
   :defsystem-depends-on ("asdf-package-system")
   :depends-on ("cheetos/tests")
