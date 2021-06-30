@@ -114,19 +114,35 @@
   (let ((frame *application-frame*))
     (setf (selected-benchmark frame) benchmark)))
 
-(define-presentation-to-command-translator select-a-benchmark
-    (benchmark com-select-benchmark cheetos)
-    (object)
-  (list object))
-
 (define-cheetos-command (com-run-benchmark)
     ((benchmark benchmark))
   ;; FIXME: run this in another thread
   (let ((*standard-output* (find-pane-named *application-frame* 'int)))
     (cheetos:run-benchmark (cheetos:name benchmark))))
 
+(define-cheetos-command (com-run-benchmark-with-tag)
+    ((benchmark benchmark)
+     (tag keyword))
+  (let ((*standard-output* (find-pane-named *application-frame* 'int)))
+    (cheetos:run-benchmark (cheetos:name benchmark)
+                           :tag tag)))
+
+;; The following translator forms are used to populate entries in a
+;; benchmark's "context menu".  They will appear in reverse order,
+;; though I doubt that it's guaranteed by the CLIM specification.
+
+(define-presentation-to-command-translator run-a-benchmark-with-tag
+    (benchmark com-run-benchmark-with-tag cheetos :gesture nil)
+    (object)
+  (list object))
+
 (define-presentation-to-command-translator run-a-benchmark
     (benchmark com-run-benchmark cheetos :gesture nil)
+    (object)
+  (list object))
+
+(define-presentation-to-command-translator select-a-benchmark
+    (benchmark com-select-benchmark cheetos)
     (object)
   (list object))
 
