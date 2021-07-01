@@ -9,6 +9,10 @@
    #:cheetos/run)
   (:import-from
    #:alexandria)
+  (:import-from
+   #:sb-ext)
+  (:import-from
+   #:sb-impl)
   (:export
    #:standard-benchmark))
 
@@ -43,7 +47,10 @@
     (when (body-function benchmark)
       (funcall (body-function benchmark)
                (lambda (function-to-measure)
-                 ;; FIXME: SBCL-specific code here, for now...
+                 ;; FIXME: SBCL-specific code here, for now.  It looks
+                 ;; like we get more consistent results if we perform
+                 ;; a full GC first.
+                 (sb-ext:gc :full t)
                  (sb-impl::call-with-timing
                   (lambda (&key user-run-time-us bytes-consed &allow-other-keys)
                     (setf r-user-run-time-us user-run-time-us)
