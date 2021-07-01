@@ -17,10 +17,12 @@
         (t (ackermann (1- m) (ackermann m (1- n))))))
 
 (define-benchmark (ackermann tiny)
-  (ackermann 3 10))
+  (measure
+   (ackermann 3 10)))
 
 (define-benchmark (ackermann small)
-  (ackermann 3 12))
+  (measure
+   (ackermann 3 12)))
 
 (defun run-tests ()
   (run-benchmark nil))

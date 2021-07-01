@@ -9,7 +9,7 @@
    #:list-session-runs
    #:create-run
    #:add-run
-   #:thunk
+   #:body-function
    #:tag
    #:name
    #:parent
@@ -46,7 +46,7 @@ BENCHMARK."))
 filler benchmark.
 
 A filler benchmark is a benchmark that does not hold a reference to a
-thunk function.  Such a benchmark usually exists to serve as a
+body function.  Such a benchmark usually exists to serve as a
 container of child benchmarks.
 
 The run will be tagged with TAG."))
@@ -57,9 +57,9 @@ The run will be tagged with TAG."))
 
 Returns the benchmark run."))
 
-(defgeneric thunk (benchmark))
+(defgeneric body-function (benchmark))
 
-(defgeneric (setf thunk) (new-thunk benchmark))
+(defgeneric (setf body-function) (new-function benchmark))
 
 (defgeneric tag (benchmark))
 

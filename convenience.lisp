@@ -13,14 +13,15 @@
    #:*reporter*
    #:run-benchmark
    #:find-benchmark
-   #:define-benchmark))
+   #:define-benchmark
+   #:measure))
 
 (in-package #:cheetos/convenience)
 
 (defvar *root-benchmark*
   (make-instance 'persisting-benchmark
                  :name '()
-                 :thunk nil))
+                 :body-function nil))
 
 (defvar *reporter*
   (make-instance 'standard-reporter)
@@ -68,24 +69,34 @@ report performance information."
 (defmacro define-benchmark (name &body body)
   "Define a benchmark associated with NAME.
 
-BODY will be evaluated when the benchmark is run.  The following
-properties may be specified prior to the actual forms:
+BODY will be evaluated when the benchmark is run.  Within body, place
+the forms to instrument inside a MEASURE form.
+
+The following properties may be specified prior to the actual forms:
 
   :TAG <form>
 
     The value of <form> will be used as the benchmark's tag.  By
     default, the benchmark tag is NIL."
-  (let ((tag nil))
+  (let ((measure-function (gensym))
+        (body-function-var (gensym))
+        (tag nil))
     (loop
      (cond ((eq (car body) :tag)
             (setf tag (cadr body))
             (setf body (cddr body)))
            (t
             (return))))
-    `(add-child *root-benchmark*
-                (make-instance 'persisting-benchmark
-                               :name ',name
-                               :tag ,tag
-                               :thunk ,(if (null body)
-                                           `nil
-                                           `(lambda () ,@body))))))
+    `(let ((,body-function-var
+             ,(if (null body)
+                  `nil
+                  `(lambda (,measure-function)
+                     (declare (ignorable ,measure-function))
+                     (macrolet ((measure (&body forms)
+                                  `(funcall ,',measure-function (lambda () ,@forms))))
+                       ,@body)))))
+       (add-child *root-benchmark*
+                  (make-instance 'persisting-benchmark
+                                 :name ',name
+                                 :tag ,tag
+                                 :body-function ,body-function-var)))))

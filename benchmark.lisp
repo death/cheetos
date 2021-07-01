@@ -19,7 +19,7 @@
    (children-table :initform (make-hash-table) :reader children-table)
    (name :initarg :name :reader name)
    (tag :initarg :tag :accessor tag)
-   (thunk :initarg :thunk :accessor thunk)
+   (body-function :initarg :body-function :accessor body-function)
    (runs :initform (make-array 0 :adjustable t :fill-pointer 0)
          :reader runs))
   (:default-initargs :tag nil))
@@ -40,20 +40,23 @@
   (let ((start-time (get-universal-time))
         r-user-run-time-us
         r-bytes-consed)
-    (when (thunk benchmark)
-      ;; FIXME: SBCL-specific code here, for now...
-      (sb-impl::call-with-timing
-       (lambda (&key user-run-time-us bytes-consed &allow-other-keys)
-         (setf r-user-run-time-us user-run-time-us)
-         (setf r-bytes-consed bytes-consed))
-       (thunk benchmark))
-      (make-instance 'standard-run
-                     :benchmark benchmark
-                     :start-time start-time
-                     :end-time (get-universal-time)
-                     :tag tag
-                     :user-run-time-us r-user-run-time-us
-                     :bytes-consed r-bytes-consed))))
+    (when (body-function benchmark)
+      (funcall (body-function benchmark)
+               (lambda (function-to-measure)
+                 ;; FIXME: SBCL-specific code here, for now...
+                 (sb-impl::call-with-timing
+                  (lambda (&key user-run-time-us bytes-consed &allow-other-keys)
+                    (setf r-user-run-time-us user-run-time-us)
+                    (setf r-bytes-consed bytes-consed))
+                  function-to-measure)))
+      (when (and r-user-run-time-us r-bytes-consed)
+        (make-instance 'standard-run
+                       :benchmark benchmark
+                       :start-time start-time
+                       :end-time (get-universal-time)
+                       :tag tag
+                       :user-run-time-us r-user-run-time-us
+                       :bytes-consed r-bytes-consed)))))
 
 (defmethod add-run ((benchmark standard-benchmark) run)
   (when run
@@ -102,7 +105,7 @@
                       (let ((intermediate
                               (make-instance 'standard-benchmark
                                              :name (append (name parent) (list (first suffix)))
-                                             :thunk nil)))
+                                             :body-function nil)))
                         (add-child parent intermediate)
                         (add-child intermediate child))))))))))
 

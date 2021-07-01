@@ -19,7 +19,7 @@
 
 (defmethod report-start-schedule ((reporter standard-reporter) benchmarks)
   (format t "~&Running ~D benchmark~:P~2%"
-          (count-if #'thunk benchmarks)))
+          (count-if #'body-function benchmarks)))
 
 (defmethod report-end-schedule ((reporter standard-reporter) runs)
   (declare (ignore runs)))
