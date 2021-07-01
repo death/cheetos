@@ -208,42 +208,32 @@
                          (formatting-cell (pane :align-x :right)
                            (when previous-run
                              (let ((previous-user-run-time-us (cheetos:user-run-time-us previous-run)))
-                               (cond ((< previous-user-run-time-us user-run-time-us)
-                                      (with-drawing-options (pane :ink +red3+)
-                                        (if (zerop previous-user-run-time-us)
-                                            (format pane "BAD")
-                                            (let ((pct (* 100.0
-                                                          (/ (- user-run-time-us previous-user-run-time-us)
-                                                             previous-user-run-time-us))))
-                                              (when (> pct user-run-time-us-pct-threshold )
-                                                (format pane " +~,1F%" pct))))))
-                                     ((> previous-user-run-time-us user-run-time-us)
-                                      (with-drawing-options (pane :ink +green4+)
-                                        (if (zerop previous-user-run-time-us)
-                                            (format pane "-100.00%")
-                                            (let ((pct (* 100.0
-                                                          (/ (- previous-user-run-time-us user-run-time-us)
-                                                             previous-user-run-time-us))))
-                                              (format pane " -~,1F%" pct)))))))))
+                               (display-change-percentage pane
+                                                          user-run-time-us
+                                                          previous-user-run-time-us
+                                                          user-run-time-us-pct-threshold))))
                          (formatting-cell (pane :align-x :right)
                            (format pane "~D b" bytes-consed))
                          (formatting-cell (pane :align-x :right)
                            (when previous-run
                              (let ((previous-bytes-consed (cheetos:bytes-consed previous-run)))
-                               (cond ((< previous-bytes-consed bytes-consed)
-                                      (with-drawing-options (pane :ink +red3+)
-                                        (if (zerop previous-bytes-consed)
-                                            (format pane "BAD")
-                                            (let ((pct (* 100.0
-                                                          (/ (- bytes-consed previous-bytes-consed)
-                                                             previous-bytes-consed))))
-                                              (when (> pct bytes-consed-pct-threshold )
-                                                (format pane " +~,1F%" pct))))))
-                                     ((> previous-bytes-consed bytes-consed)
-                                      (with-drawing-options (pane :ink +green4+)
-                                        (if (zerop previous-bytes-consed)
-                                            (format pane "-100.00%")
-                                            (let ((pct (* 100.0
-                                                          (/ (- previous-bytes-consed bytes-consed)
-                                                             previous-bytes-consed))))
-                                              (format pane " -~,1F%" pct))))))))))))))))))
+                               (display-change-percentage pane
+                                                          bytes-consed
+                                                          previous-bytes-consed
+                                                          bytes-consed-pct-threshold)))))))))))))
+
+(defun display-change-percentage (stream current-value previous-value threshold)
+  (cond ((< current-value previous-value)
+         (with-drawing-options (stream :ink +green4+)
+           (if (zerop current-value)
+               (format stream "-100.0%")
+               (let ((pct (* 100.0 (/ (- previous-value current-value) previous-value))))
+                 (when (> pct threshold)
+                   (format stream "-~,1F%" pct))))))
+        ((> current-value previous-value)
+         (with-drawing-options (stream :ink +red3+)
+           (if (zerop previous-value)
+               (format stream "BAD")
+               (let ((pct (* 100.0 (/ (- current-value previous-value) previous-value))))
+                 (when (> pct threshold)
+                   (format stream "+~,1F%" pct))))))))
