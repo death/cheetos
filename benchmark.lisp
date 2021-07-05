@@ -31,7 +31,7 @@
 (defmethod print-object ((benchmark standard-benchmark) stream)
   (print-unreadable-object (benchmark stream :type t)
     (with-slots (name tag runs) benchmark
-      (format stream "~S~@[ tag ~S~]~[~; ~:*~D run~:P~]" name tag (length runs)))))
+      (format stream "~:S~@[ tag ~S~]~[~; ~:*~D run~:P~]" name tag (length runs)))))
 
 (defmethod tag :around ((benchmark standard-benchmark))
   (or (call-next-method)
