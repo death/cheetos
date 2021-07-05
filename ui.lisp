@@ -19,6 +19,8 @@
 
 (define-presentation-type benchmark ())
 
+(define-presentation-type run ())
+
 (define-application-frame cheetos ()
   ((root-benchmark :initform cheetos/convenience::*root-benchmark*
                    :reader root-benchmark)
@@ -197,30 +199,31 @@
                                                            :filled t
                                                            :padding 0
                                                            :move-cursor nil)
-                       (formatting-row (pane)
-                         (formatting-cell (pane)
-                           (format pane "~2,'0D:~2,'0D:~2,'0D" h m s))
-                         (formatting-cell (pane)
-                           (when tag
-                             (format pane "~:(~A~)" tag)))
-                         (formatting-cell (pane :align-x :right)
-                           (format pane "~D μs" user-run-time-us))
-                         (formatting-cell (pane :align-x :right)
-                           (when previous-run
-                             (let ((previous-user-run-time-us (cheetos:user-run-time-us previous-run)))
-                               (display-change-percentage pane
-                                                          user-run-time-us
-                                                          previous-user-run-time-us
-                                                          user-run-time-us-pct-threshold))))
-                         (formatting-cell (pane :align-x :right)
-                           (format pane "~D b" bytes-consed))
-                         (formatting-cell (pane :align-x :right)
-                           (when previous-run
-                             (let ((previous-bytes-consed (cheetos:bytes-consed previous-run)))
-                               (display-change-percentage pane
-                                                          bytes-consed
-                                                          previous-bytes-consed
-                                                          bytes-consed-pct-threshold)))))))))))))
+                       (with-output-as-presentation (pane run 'run :single-box t)
+                         (formatting-row (pane)
+                           (formatting-cell (pane)
+                             (format pane "~2,'0D:~2,'0D:~2,'0D" h m s))
+                           (formatting-cell (pane)
+                             (when tag
+                               (format pane "~:(~A~)" tag)))
+                           (formatting-cell (pane :align-x :right)
+                             (format pane "~D μs" user-run-time-us))
+                           (formatting-cell (pane :align-x :right)
+                             (when previous-run
+                               (let ((previous-user-run-time-us (cheetos:user-run-time-us previous-run)))
+                                 (display-change-percentage pane
+                                                            user-run-time-us
+                                                            previous-user-run-time-us
+                                                            user-run-time-us-pct-threshold))))
+                           (formatting-cell (pane :align-x :right)
+                             (format pane "~D b" bytes-consed))
+                           (formatting-cell (pane :align-x :right)
+                             (when previous-run
+                               (let ((previous-bytes-consed (cheetos:bytes-consed previous-run)))
+                                 (display-change-percentage pane
+                                                            bytes-consed
+                                                            previous-bytes-consed
+                                                            bytes-consed-pct-threshold))))))))))))))
 
 (defun display-change-percentage (stream current-value previous-value threshold)
   (cond ((< current-value previous-value)
@@ -237,3 +240,13 @@
                (let ((pct (* 100.0 (/ (- current-value previous-value) previous-value))))
                  (when (> pct threshold)
                    (format stream "+~,1F%" pct))))))))
+
+(define-cheetos-command (com-delete-run)
+    ((run run))
+  (cheetos/persist:with-db
+    (cheetos/persist:delete-run run)))
+
+(define-presentation-to-command-translator delete-a-run
+    (run com-delete-run cheetos :gesture nil)
+    (object)
+  (list object))

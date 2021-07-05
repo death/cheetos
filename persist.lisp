@@ -15,7 +15,9 @@
   (:export
    #:persisting-benchmark
    #:with-db
-   #:list-runs))
+   #:list-runs
+   #:delete-run
+   #:id))
 
 (in-package #:cheetos/persist)
 
@@ -121,6 +123,9 @@
          (user-run-time-us run)
          (bytes-consed run)))))
 
+(defclass persisted-run (standard-run)
+  ((id :initarg :id :reader id)))
+
 (defun list-runs (benchmark)
   (with-standard-io-syntax
     (let ((*package* (load-time-value (find-package "KEYWORD")))
@@ -133,8 +138,9 @@
                                           end-time tag-id user-run-time-us
                                           bytes-consed)
                          row
-                       (declare (ignore id benchmark-id))
-                       (make-instance 'standard-run
+                       (declare (ignore benchmark-id))
+                       (make-instance 'persisted-run
+                                      :id id
                                       :benchmark benchmark
                                       :start-time start-time
                                       :end-time end-time
@@ -150,6 +156,10 @@
                             "WHERE benchmark_id = ?"
                             "ORDER BY id DESC")
                            benchmark-id)))))))))
+
+(defun delete-run (run)
+  (when (typep run 'persisted-run)
+    (e "DELETE FROM runs WHERE id = ?" (id run))))
 
 (defclass persisting-benchmark (standard-benchmark)
   ())
