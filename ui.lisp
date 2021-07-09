@@ -207,7 +207,7 @@
                              (when tag
                                (format pane "~:(~A~)" tag)))
                            (formatting-cell (pane :align-x :right)
-                             (format pane "~D μs" user-run-time-us))
+                             (format pane "~:D μs" user-run-time-us))
                            (formatting-cell (pane :align-x :right)
                              (when previous-run
                                (let ((previous-user-run-time-us (cheetos:user-run-time-us previous-run)))
@@ -216,7 +216,7 @@
                                                             previous-user-run-time-us
                                                             user-run-time-us-pct-threshold))))
                            (formatting-cell (pane :align-x :right)
-                             (format pane "~D b" bytes-consed))
+                             (format pane "~:D b" bytes-consed))
                            (formatting-cell (pane :align-x :right)
                              (when previous-run
                                (let ((previous-bytes-consed (cheetos:bytes-consed previous-run)))

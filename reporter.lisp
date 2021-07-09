@@ -38,7 +38,7 @@
            (user-run-time-us (user-run-time-us run))
            (bytes-consed (bytes-consed run))
            (time-string (time-point-string start-time))
-           (perf-string (format nil "~D μs, ~D b" user-run-time-us bytes-consed)))
+           (perf-string (format nil "~:D μs, ~:D b" user-run-time-us bytes-consed)))
       (when (and user-run-time-us bytes-consed)
         (format t "[~A] <~:(~{~A~^ :: ~}~)>~@[ [~A]~] ~A~%"
                 time-string
