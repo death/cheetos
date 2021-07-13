@@ -103,7 +103,7 @@ Returns the benchmark run."))
 
 (defgeneric report-end-schedule (reporter runs)
   (:documentation
-   "Calls after benchmarks are run, with a list of the RUNS they
+   "Called after benchmarks are run, with a list of the RUNS they
 created.
 
 Not all benchmarks create benchmark runs.  In particular, filler
