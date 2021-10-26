@@ -163,7 +163,9 @@
         (if (null benchmark)
             (format pane "No benchmark selected")
             (let ((name (cheetos:name benchmark)))
-              (format pane "~:(~{~A~^ :: ~}~) Runs~%" (or name '("Root"))))))))
+              (with-output-as-presentation (pane benchmark 'benchmark)
+                (format pane "~:(~{~A~^ :: ~}~)" (or name '("Root"))))
+              (format pane " Runs~%"))))))
   (terpri pane)
   (stream-increment-cursor-position pane nil 10)
   (when benchmark
