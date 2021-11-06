@@ -50,7 +50,9 @@
     (vertically ()
       (9/10 (horizontally ()
               (2/10 benchmark-tree)
+              (make-pane 'clime:box-adjuster-gadget)
               (8/10 runs)))
+      (make-pane 'clime:box-adjuster-gadget)
       (1/10 int)))))
 
 (defun cheetos ()
