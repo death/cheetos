@@ -110,7 +110,7 @@
         (add-tag tag)
         (find-tag tag))))
 
-(defun intern-run (run)
+(defun insert-run (run)
   (with-standard-io-syntax
     (let ((*package* (load-time-value (find-package "KEYWORD"))))
       (e ("INSERT INTO runs"
@@ -121,10 +121,14 @@
          (end-time run)
          (intern-tag (prin1-to-string (tag run)))
          (user-run-time-us run)
-         (bytes-consed run)))))
+         (bytes-consed run))
+      (sqlite:last-insert-rowid *db*))))
 
 (defclass persisted-run (standard-run)
   ((id :initarg :id :reader id)))
+
+(defmethod run-equal ((run1 persisted-run) (run2 persisted-run))
+  (= (id run1) (id run2)))
 
 (defun list-runs (benchmark)
   (with-standard-io-syntax
@@ -167,4 +171,5 @@
 (defmethod add-run :after ((benchmark persisting-benchmark) run)
   (when run
     (with-tx
-      (intern-run run))))
+      (let ((id (insert-run run)))
+        (change-class run 'persisted-run :id id)))))

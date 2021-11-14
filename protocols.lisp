@@ -24,6 +24,7 @@
    #:tag
    #:user-run-time-us
    #:bytes-consed
+   #:run-equal
    #:reporter
    #:report-start-schedule
    #:report-end-schedule
@@ -93,6 +94,13 @@ Returns the benchmark run."))
 (defgeneric user-run-time-us (run))
 
 (defgeneric bytes-consed (run))
+
+(defgeneric run-equal (run1 run2)
+  (:documentation
+   "Return true if the two run instances refer to the same actual run,
+and false otherwise.")
+  (:method (run1 run2)
+    (eq run1 run2)))
 
 (defclass reporter ()
   ())

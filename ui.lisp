@@ -27,7 +27,11 @@
    (expand-table :initform (make-hash-table)
                  :reader expand-table)
    (selected-benchmark :initform nil
-                       :accessor selected-benchmark))
+                       :accessor selected-benchmark)
+   (reference-run :initform nil
+                  :accessor reference-run)
+   (reference-pane :initform nil
+                   :accessor reference-pane))
   (:panes
    (benchmark-tree :application
                    :display-function 'display-benchmark-tree
@@ -43,15 +47,19 @@
                          :top (:relative 10)
                          :right (:relative 10)
                          :bottom (:relative 10))
+         :incremental-redisplay t
          :end-of-page-action :allow)
    (int :interactor))
   (:layouts
    (default
     (vertically ()
-      (9/10 (horizontally ()
-              (2/10 benchmark-tree)
-              (make-pane 'clime:box-adjuster-gadget)
-              (8/10 runs)))
+      (9/10
+       (horizontally ()
+         (2/10 benchmark-tree)
+         (make-pane 'clime:box-adjuster-gadget)
+         (8/10
+          (vertically (:name 'dynamic)
+            (+fill+ runs)))))
       (make-pane 'clime:box-adjuster-gadget)
       (1/10 int)))))
 
@@ -171,12 +179,11 @@
   (terpri pane)
   (stream-increment-cursor-position pane nil 10)
   (when benchmark
-    (display-benchmark-runs-2 pane benchmark))
+    (display-benchmark-runs-2 pane (cheetos/persist:list-runs benchmark)))
   (terpri pane))
 
-(defun display-benchmark-runs-2 (pane benchmark)
-  (let ((runs (cheetos/persist:list-runs benchmark))
-        (last-start-date nil)
+(defun display-benchmark-runs-2 (pane runs)
+  (let ((last-start-date nil)
         (user-run-time-us-pct-threshold 0.1)
         (bytes-consed-pct-threshold 0.1))
     (when runs
@@ -186,62 +193,74 @@
               do (let ((tag (cheetos:tag run))
                        (user-run-time-us (cheetos:user-run-time-us run))
                        (bytes-consed (cheetos:bytes-consed run))
-                       (start-time (cheetos:start-time run)))
-                   (multiple-value-bind (s m h d mm y) (decode-universal-time start-time)
-                     (let ((start-date (list y mm d)))
-                       (when (or (null last-start-date)
-                                 (not (equal last-start-date start-date)))
-                         (formatting-row (pane)
-                           (formatting-cell (pane)
-                             (with-text-size (pane :large)
-                               (with-drawing-options (pane :ink +deepskyblue4+)
-                                 (format pane "~4,'0D-~2,'0D-~2,'0D" y mm d)))))
-                         (setf last-start-date start-date)))
-                     (surrounding-output-with-border (pane :ink (if (oddp i)
-                                                                    +gray90+
-                                                                    +white+)
-                                                           :filled t
-                                                           :padding 0
-                                                           :move-cursor nil)
-                       (with-output-as-presentation (pane run 'run :single-box t)
-                         (formatting-row (pane)
-                           (formatting-cell (pane)
-                             (format pane "~2,'0D:~2,'0D:~2,'0D" h m s))
-                           (formatting-cell (pane)
-                             (when tag
-                               (format pane "~:(~A~)" tag)))
-                           (formatting-cell (pane :align-x :right)
-                             (format pane "~:D μs" user-run-time-us))
-                           (formatting-cell (pane :align-x :right)
-                             (when previous-run
-                               (let ((previous-user-run-time-us (cheetos:user-run-time-us previous-run)))
-                                 (display-change-percentage pane
-                                                            user-run-time-us
-                                                            previous-user-run-time-us
-                                                            user-run-time-us-pct-threshold))))
-                           (formatting-cell (pane :align-x :right)
-                             (format pane "~:D b" bytes-consed))
-                           (formatting-cell (pane :align-x :right)
-                             (when previous-run
-                               (let ((previous-bytes-consed (cheetos:bytes-consed previous-run)))
-                                 (display-change-percentage pane
-                                                            bytes-consed
-                                                            previous-bytes-consed
-                                                            bytes-consed-pct-threshold))))))))))))))
+                       (start-time (cheetos:start-time run))
+                       (reference-run (or (reference-run *application-frame*) previous-run)))
+                   (updating-output (pane :unique-id run
+                                          :cache-value (list run reference-run)
+                                          :cache-test (lambda (v1 v2)
+                                                        (destructuring-bind (run1 ref1) v1
+                                                          (destructuring-bind (run2 ref2) v2
+                                                            (and (cheetos:run-equal run1 run2)
+                                                                 (cheetos:run-equal ref1 ref2))))))
+                     (multiple-value-bind (s m h d mm y) (decode-universal-time start-time)
+                       (let ((start-date (list y mm d)))
+                         (when (or (null last-start-date)
+                                   (not (equal last-start-date start-date)))
+                           (formatting-row (pane)
+                             (formatting-cell (pane)
+                               (with-text-size (pane :large)
+                                 (with-drawing-options (pane :ink +deepskyblue4+)
+                                   (format pane "~4,'0D-~2,'0D-~2,'0D" y mm d)))))
+                           (setf last-start-date start-date)))
+                       (surrounding-output-with-border
+                           (pane :ink (cond ((cheetos:run-equal run reference-run)
+                                             +pink1+)
+                                            ((oddp i)
+                                             +gray90+)
+                                            (t
+                                             +white+))
+                                 :filled t
+                                 :padding 0
+                                 :move-cursor nil)
+                         (with-output-as-presentation (pane run 'run :single-box t)
+                           (formatting-row (pane)
+                             (formatting-cell (pane)
+                               (format pane "~2,'0D:~2,'0D:~2,'0D" h m s))
+                             (formatting-cell (pane)
+                               (when tag
+                                 (format pane "~:(~A~)" tag)))
+                             (formatting-cell (pane :align-x :right)
+                               (format pane "~:D μs" user-run-time-us))
+                             (formatting-cell (pane :align-x :right)
+                               (when reference-run
+                                 (let ((reference-user-run-time-us (cheetos:user-run-time-us reference-run)))
+                                   (display-change-percentage pane
+                                                              user-run-time-us
+                                                              reference-user-run-time-us
+                                                              user-run-time-us-pct-threshold))))
+                             (formatting-cell (pane :align-x :right)
+                               (format pane "~:D b" bytes-consed))
+                             (formatting-cell (pane :align-x :right)
+                               (when reference-run
+                                 (let ((reference-bytes-consed (cheetos:bytes-consed reference-run)))
+                                   (display-change-percentage pane
+                                                              bytes-consed
+                                                              reference-bytes-consed
+                                                              bytes-consed-pct-threshold)))))))))))))))
 
-(defun display-change-percentage (stream current-value previous-value threshold)
-  (cond ((< current-value previous-value)
+(defun display-change-percentage (stream current-value reference-value threshold)
+  (cond ((< current-value reference-value)
          (with-drawing-options (stream :ink +green4+)
            (if (zerop current-value)
                (format stream "-100.0%")
-               (let ((pct (* 100.0 (/ (- previous-value current-value) previous-value))))
+               (let ((pct (* 100.0 (/ (- reference-value current-value) reference-value))))
                  (when (> pct threshold)
                    (format stream "-~,1F%" pct))))))
-        ((> current-value previous-value)
+        ((> current-value reference-value)
          (with-drawing-options (stream :ink +red3+)
-           (if (zerop previous-value)
+           (if (zerop reference-value)
                (format stream "BAD")
-               (let ((pct (* 100.0 (/ (- current-value previous-value) previous-value))))
+               (let ((pct (* 100.0 (/ (- current-value reference-value) reference-value))))
                  (when (> pct threshold)
                    (format stream "+~,1F%" pct))))))))
 
@@ -252,5 +271,57 @@
 
 (define-presentation-to-command-translator delete-a-run
     (run com-delete-run cheetos :gesture nil)
+    (object)
+  (list object))
+
+(defclass reference-pane (application-pane)
+  ()
+  (:default-initargs
+   :display-function 'display-reference-pane))
+
+(defun display-reference-pane (frame pane)
+  (let ((run (reference-run frame)))
+    (when run
+      (with-text-size (pane :large)
+        (with-drawing-options (pane :ink +pink4+)
+          (surrounding-output-with-border (pane :shape :underline)
+            (let* ((benchmark (cheetos:benchmark run))
+                   (name (cheetos:name benchmark)))
+              (with-output-as-presentation (pane benchmark 'benchmark)
+                (format pane "~:(~{~A~^ :: ~}~)" (or name '("Root"))))
+              (format pane " Reference Run~%")))))
+      (terpri pane)
+      (display-benchmark-runs-2 pane (list run)))))
+
+(define-cheetos-command (com-toggle-reference-run)
+    ((run run))
+  (let* ((frame *application-frame*)
+         (pane (or (reference-pane frame)
+                   (setf (reference-pane frame)
+                         (make-pane 'reference-pane))))
+         (dynamic (find-pane-named frame 'dynamic)))
+    (setf (reference-run frame)
+          (if (cheetos:run-equal (reference-run frame) run)
+              nil
+              run))
+    (cond ((and (null (reference-run frame))
+                (sheet-parent pane))
+           (sheet-disown-child dynamic pane))
+          ((and (reference-run frame)
+                (null (sheet-parent pane)))
+           (sheet-adopt-child dynamic pane)
+           ;; CLIM does not expose interfaces to control box layout
+           ;; children, so we resort to fiddling with McCLIM internals
+           ;; in order to change the pane's proportion in the box.
+           ;; The pane was wrapped as a box-client and appended to the
+           ;; box layout's clients list.
+           (let* ((clients (climi::box-layout-mixin-clients dynamic))
+                  (box-client (find pane clients :key #'climi::box-client-pane)))
+             (assert (not (null box-client)))
+             (setf (climi::box-client-fixed-size box-client) 100)
+             (change-space-requirements dynamic))))))
+
+(define-presentation-to-command-translator toggle-reference-run
+    (run com-toggle-reference-run cheetos)
     (object)
   (list object))
