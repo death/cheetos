@@ -35,6 +35,7 @@
   (:panes
    (benchmark-tree :application
                    :display-function 'display-benchmark-tree
+                   :incremental-redisplay t
                    :min-width 200
                    :text-margins '(:left (:relative 10)
                                    :top (:relative 10)
@@ -63,9 +64,13 @@
       (make-pane 'clime:box-adjuster-gadget)
       (1/10 int)))))
 
-(defun cheetos ()
-  (run-frame-top-level
-   (make-application-frame 'cheetos)))
+(defun cheetos (&key (new-process t))
+  (labels ((run ()
+             (run-frame-top-level
+              (make-application-frame 'cheetos))))
+    (if new-process
+        (clim-sys:make-process #'run :name "Cheetos")
+        (run))))
 
 (defun display-benchmark-tree (frame pane)
   (with-text-size (pane :huge)
@@ -195,7 +200,7 @@
                        (bytes-consed (cheetos:bytes-consed run))
                        (start-time (cheetos:start-time run))
                        (reference-run (or (reference-run *application-frame*) previous-run)))
-                   (updating-output (pane :unique-id run
+                   (updating-output (pane :unique-id (cheetos/persist:id run)
                                           :cache-value (list run reference-run)
                                           :cache-test (lambda (v1 v2)
                                                         (destructuring-bind (run1 ref1) v1
