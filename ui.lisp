@@ -200,58 +200,51 @@
                        (bytes-consed (cheetos:bytes-consed run))
                        (start-time (cheetos:start-time run))
                        (reference-run (or (reference-run *application-frame*) previous-run)))
-                   (updating-output (pane :unique-id (cheetos/persist:id run)
-                                          :cache-value (list run reference-run)
-                                          :cache-test (lambda (v1 v2)
-                                                        (destructuring-bind (run1 ref1) v1
-                                                          (destructuring-bind (run2 ref2) v2
-                                                            (and (cheetos:run-equal run1 run2)
-                                                                 (cheetos:run-equal ref1 ref2))))))
-                     (multiple-value-bind (s m h d mm y) (decode-universal-time start-time)
-                       (let ((start-date (list y mm d)))
-                         (when (or (null last-start-date)
-                                   (not (equal last-start-date start-date)))
-                           (formatting-row (pane)
-                             (formatting-cell (pane)
-                               (with-text-size (pane :large)
-                                 (with-drawing-options (pane :ink +deepskyblue4+)
-                                   (format pane "~4,'0D-~2,'0D-~2,'0D" y mm d)))))
-                           (setf last-start-date start-date)))
-                       (surrounding-output-with-border
-                           (pane :ink (cond ((cheetos:run-equal run reference-run)
-                                             +pink1+)
-                                            ((oddp i)
-                                             +gray90+)
-                                            (t
-                                             +white+))
-                                 :filled t
-                                 :padding 0
-                                 :move-cursor nil)
-                         (with-output-as-presentation (pane run 'run :single-box t)
-                           (formatting-row (pane)
-                             (formatting-cell (pane)
-                               (format pane "~2,'0D:~2,'0D:~2,'0D" h m s))
-                             (formatting-cell (pane)
-                               (when tag
-                                 (format pane "~:(~A~)" tag)))
-                             (formatting-cell (pane :align-x :right)
-                               (format pane "~:D μs" user-run-time-us))
-                             (formatting-cell (pane :align-x :right)
-                               (when reference-run
-                                 (let ((reference-user-run-time-us (cheetos:user-run-time-us reference-run)))
-                                   (display-change-percentage pane
-                                                              user-run-time-us
-                                                              reference-user-run-time-us
-                                                              user-run-time-us-pct-threshold))))
-                             (formatting-cell (pane :align-x :right)
-                               (format pane "~:D b" bytes-consed))
-                             (formatting-cell (pane :align-x :right)
-                               (when reference-run
-                                 (let ((reference-bytes-consed (cheetos:bytes-consed reference-run)))
-                                   (display-change-percentage pane
-                                                              bytes-consed
-                                                              reference-bytes-consed
-                                                              bytes-consed-pct-threshold)))))))))))))))
+                   (multiple-value-bind (s m h d mm y) (decode-universal-time start-time)
+                     (let ((start-date (list y mm d)))
+                       (when (or (null last-start-date)
+                                 (not (equal last-start-date start-date)))
+                         (formatting-row (pane)
+                           (formatting-cell (pane)
+                             (with-text-size (pane :large)
+                               (with-drawing-options (pane :ink +deepskyblue4+)
+                                 (format pane "~4,'0D-~2,'0D-~2,'0D" y mm d)))))
+                         (setf last-start-date start-date)))
+                     (surrounding-output-with-border
+                         (pane :ink (cond ((cheetos:run-equal run reference-run)
+                                           +pink1+)
+                                          ((oddp i)
+                                           +gray90+)
+                                          (t
+                                           +white+))
+                               :filled t
+                               :padding 0
+                               :move-cursor nil)
+                       (with-output-as-presentation (pane run 'run :single-box t)
+                         (formatting-row (pane)
+                           (formatting-cell (pane)
+                             (format pane "~2,'0D:~2,'0D:~2,'0D" h m s))
+                           (formatting-cell (pane)
+                             (when tag
+                               (format pane "~:(~A~)" tag)))
+                           (formatting-cell (pane :align-x :right)
+                             (format pane "~:D μs" user-run-time-us))
+                           (formatting-cell (pane :align-x :right)
+                             (when reference-run
+                               (let ((reference-user-run-time-us (cheetos:user-run-time-us reference-run)))
+                                 (display-change-percentage pane
+                                                            user-run-time-us
+                                                            reference-user-run-time-us
+                                                            user-run-time-us-pct-threshold))))
+                           (formatting-cell (pane :align-x :right)
+                             (format pane "~:D b" bytes-consed))
+                           (formatting-cell (pane :align-x :right)
+                             (when reference-run
+                               (let ((reference-bytes-consed (cheetos:bytes-consed reference-run)))
+                                 (display-change-percentage pane
+                                                            bytes-consed
+                                                            reference-bytes-consed
+                                                            bytes-consed-pct-threshold))))))))))))))
 
 (defun display-change-percentage (stream current-value reference-value threshold)
   (cond ((< current-value reference-value)
