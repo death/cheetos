@@ -21,6 +21,17 @@
 
 (define-presentation-type run ())
 
+(defclass cheetos-application-pane (application-pane)
+  ()
+  (:default-initargs
+   :text-margins '(:left (:relative 10)
+                   :top (:relative 10)
+                   :right (:relative 10)
+                   :bottom (:relative 10))
+   :min-width 200
+   :end-of-page-action :allow
+   :incremental-redisplay t))
+
 (define-application-frame cheetos ()
   ((root-benchmark :initform cheetos/convenience::*root-benchmark*
                    :reader root-benchmark)
@@ -33,34 +44,23 @@
    (reference-pane :initform nil
                    :accessor reference-pane))
   (:panes
-   (benchmark-tree :application
-                   :display-function 'display-benchmark-tree
-                   :incremental-redisplay t
-                   :min-width 200
-                   :text-margins '(:left (:relative 10)
-                                   :top (:relative 10)
-                                   :right (:relative 10)
-                                   :bottom (:relative 10))
-                   :end-of-page-action :allow)
-   (runs :application
-         :display-function 'display-benchmark-runs
-         :text-margins '(:left (:relative 10)
-                         :top (:relative 10)
-                         :right (:relative 10)
-                         :bottom (:relative 10))
-         :incremental-redisplay t
-         :end-of-page-action :allow)
+   (benchmark-tree
+    (make-pane 'cheetos-application-pane
+               :display-function 'display-benchmark-tree))
+   (runs
+    (make-pane 'cheetos-application-pane
+               :display-function 'display-benchmark-runs))
    (int :interactor))
   (:layouts
    (default
     (vertically ()
       (9/10
        (horizontally ()
-         (2/10 benchmark-tree)
+         (2/10 (scrolling () benchmark-tree))
          (make-pane 'clime:box-adjuster-gadget)
          (8/10
           (vertically (:name 'dynamic)
-            (+fill+ runs)))))
+            (+fill+ (scrolling () runs))))))
       (make-pane 'clime:box-adjuster-gadget)
       (1/10 int)))))
 
@@ -75,8 +75,8 @@
 (defun display-benchmark-tree (frame pane)
   (with-text-size (pane :huge)
     (with-drawing-options (pane :ink +deepskyblue4+)
-      (surrounding-output-with-border (pane :shape :underline)
-        (format pane "Benchmarks~%"))))
+      (surrounding-output-with-border (pane :shape :underline :move-cursor nil)
+        (format pane "Benchmarks"))))
   (terpri pane)
   (stream-increment-cursor-position pane nil 10)
   (display-benchmark-node frame pane (root-benchmark frame)))
@@ -112,8 +112,8 @@
         (dolist (child children)
           (display-benchmark-node frame pane child))))))
 
-(define-cheetos-command (com-toggle-node)
-    ((node tree-pane-node))
+(define-cheetos-command (com-toggle-node :name t)
+    ((node 'tree-pane-node))
   (let* ((frame *application-frame*)
          (expand-table (expand-table frame)))
     (setf (gethash node expand-table)
@@ -126,20 +126,20 @@
     (object)
   (list object))
 
-(define-cheetos-command (com-select-benchmark)
-    ((benchmark benchmark))
+(define-cheetos-command (com-select-benchmark :name t)
+    ((benchmark 'benchmark))
   (let ((frame *application-frame*))
     (setf (selected-benchmark frame) benchmark)))
 
-(define-cheetos-command (com-run-benchmark)
-    ((benchmark benchmark))
+(define-cheetos-command (com-run-benchmark :name t)
+    ((benchmark 'benchmark))
   ;; FIXME: run this in another thread
   (let ((*standard-output* (find-pane-named *application-frame* 'int)))
     (cheetos:run-benchmark (cheetos:name benchmark))))
 
-(define-cheetos-command (com-run-benchmark-with-tag)
-    ((benchmark benchmark)
-     (tag keyword))
+(define-cheetos-command (com-run-benchmark-with-tag :name t)
+    ((benchmark 'benchmark)
+     (tag 'keyword))
   (let ((*standard-output* (find-pane-named *application-frame* 'int)))
     (cheetos:run-benchmark (cheetos:name benchmark)
                            :tag tag)))
@@ -174,13 +174,13 @@
 (defun display-benchmark-runs-1 (pane benchmark)
   (with-text-size (pane :huge)
     (with-drawing-options (pane :ink +deepskyblue4+)
-      (surrounding-output-with-border (pane :shape :underline :move-cursor t)
+      (surrounding-output-with-border (pane :shape :underline :move-cursor nil)
         (if (null benchmark)
             (format pane "No benchmark selected")
             (let ((name (cheetos:name benchmark)))
               (with-output-as-presentation (pane benchmark 'benchmark)
                 (format pane "~:(~{~A~^ :: ~}~)" (or name '("Root"))))
-              (format pane " Runs~%"))))))
+              (format pane " Runs"))))))
   (terpri pane)
   (stream-increment-cursor-position pane nil 10)
   (when benchmark
@@ -262,8 +262,8 @@
                  (when (> pct threshold)
                    (format stream "+~,1F%" pct))))))))
 
-(define-cheetos-command (com-delete-run)
-    ((run run))
+(define-cheetos-command (com-delete-run :name t)
+    ((run 'run))
   (cheetos/persist:with-db
     (cheetos/persist:delete-run run)))
 
@@ -282,17 +282,17 @@
     (when run
       (with-text-size (pane :large)
         (with-drawing-options (pane :ink +pink4+)
-          (surrounding-output-with-border (pane :shape :underline)
+          (surrounding-output-with-border (pane :shape :underline :move-cursor nil)
             (let* ((benchmark (cheetos:benchmark run))
                    (name (cheetos:name benchmark)))
               (with-output-as-presentation (pane benchmark 'benchmark)
                 (format pane "~:(~{~A~^ :: ~}~)" (or name '("Root"))))
-              (format pane " Reference Run~%")))))
+              (format pane " Reference Run")))))
       (terpri pane)
       (display-benchmark-runs-2 pane (list run)))))
 
-(define-cheetos-command (com-toggle-reference-run)
-    ((run run))
+(define-cheetos-command (com-toggle-reference-run :name t)
+    ((run 'run))
   (let* ((frame *application-frame*)
          (pane (or (reference-pane frame)
                    (setf (reference-pane frame)
