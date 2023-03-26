@@ -13,6 +13,7 @@
    #:*reporter*
    #:run-benchmark
    #:find-benchmark
+   #:collect-benchmarks
    #:define-benchmark
    #:measure))
 
@@ -49,6 +50,13 @@ report performance information."
     (report-end-schedule reporter (nreverse new-runs))))
 
 (defun find-benchmark (name &key (if-does-not-exist nil))
+  "Find benchmark corresponding to NAME.
+
+If there is no benchmark that corresponds to NAME, act according to
+IF-DOES-NOT-EXIST: if it is null, return NIL; if it is :ERROR, signal
+an error.
+
+Note that the root benchmark is named ()."
   (labels ((rec (benchmark path)
              (cond ((null benchmark)
                     (ecase if-does-not-exist

@@ -33,7 +33,7 @@
    :incremental-redisplay t))
 
 (define-application-frame cheetos ()
-  ((root-benchmark :initform cheetos/convenience::*root-benchmark*
+  ((root-benchmark :initform (cheetos:find-benchmark '())
                    :reader root-benchmark)
    (expand-table :initform (make-hash-table)
                  :reader expand-table)
