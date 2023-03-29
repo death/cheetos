@@ -42,7 +42,9 @@
    (reference-run :initform nil
                   :accessor reference-run)
    (reference-pane :initform nil
-                   :accessor reference-pane))
+                   :accessor reference-pane)
+   (default-tag :initarg :default-tag
+                :accessor default-tag))
   (:panes
    (benchmark-tree
     (make-pane 'cheetos-application-pane
@@ -64,10 +66,13 @@
       (make-pane 'clime:box-adjuster-gadget)
       (1/10 int)))))
 
-(defun cheetos (&key (new-process t))
+(defun cheetos (&key (new-process t) (tag nil tag-supplied))
   (labels ((run ()
              (run-frame-top-level
-              (make-application-frame 'cheetos))))
+              (apply #'make-application-frame
+                     'cheetos
+                     (when tag-supplied
+                       (list :default-tag tag))))))
     (if new-process
         (clim-sys:make-process #'run :name "Cheetos")
         (run))))
@@ -134,8 +139,12 @@
 (define-cheetos-command (com-run-benchmark :name t)
     ((benchmark 'benchmark))
   ;; FIXME: run this in another thread
-  (let ((*standard-output* (find-pane-named *application-frame* 'int)))
-    (cheetos:run-benchmark (cheetos:name benchmark))))
+  (let* ((frame *application-frame*)
+         (*standard-output* (find-pane-named frame 'int)))
+    (apply #'cheetos:run-benchmark
+           (cheetos:name benchmark)
+           (when (slot-boundp frame 'default-tag)
+             (list :tag (default-tag frame))))))
 
 (define-cheetos-command (com-run-benchmark-with-tag :name t)
     ((benchmark 'benchmark)
