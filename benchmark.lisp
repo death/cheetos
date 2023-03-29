@@ -13,6 +13,8 @@
    #:sb-ext)
   (:import-from
    #:sb-impl)
+  (:import-from
+   #:sb-sprof)
   (:export
    #:standard-benchmark))
 
@@ -39,6 +41,13 @@
         (if (null parent)
             nil
             (tag parent)))))
+
+(defmethod profile ((benchmark standard-benchmark))
+  (when (body-function benchmark)
+    (funcall (body-function benchmark)
+             (lambda (function-to-measure)
+               (sb-sprof:with-profiling (:reset t :report :graph)
+                 (funcall function-to-measure))))))
 
 (defmethod create-run ((benchmark standard-benchmark) tag)
   (let ((start-time (get-universal-time))
